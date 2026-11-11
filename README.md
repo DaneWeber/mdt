@@ -58,6 +58,50 @@ Generated at 2026-01-02T12:34:56Z
 - Wove crowns of flowers
 ```
 
+## Building
+
+Requires Go 1.26.5 or newer (see `go.mod`). The included DevContainer
+(`.devcontainer/`) comes with a suitable Go toolchain already installed.
+
+The `Makefile` wraps the common commands:
+
+| Command        | What it does                                         |
+| -------------- | ---------------------------------------------------- |
+| `make`         | Build the `mdt` binary in the repository root        |
+| `make install` | Install `mdt` to Go's bin directory                  |
+| `make test`    | Run the tests                                        |
+| `make clean`   | Remove the built binary                              |
+| `make help`    | List the available targets                           |
+
+The equivalent Go commands are below.
+
+Build a binary in the repository root:
+
+```bash
+go build -o mdt .
+./mdt --help
+```
+
+Or install it to `$(go env GOPATH)/bin` (or `$GOBIN`, if set) so `mdt` is
+available everywhere:
+
+```bash
+go install .
+```
+
+If the shell then reports `mdt: command not found`, add Go's bin directory to
+your `PATH`:
+
+```bash
+export PATH="$PATH:$(go env GOPATH)/bin"
+```
+
+Run the tests:
+
+```bash
+go test ./...
+```
+
 ## Usage
 
 ```bash
