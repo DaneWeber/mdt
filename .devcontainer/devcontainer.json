@@ -1,12 +1,10 @@
 // For format details, see https://aka.ms/devcontainer.json. For config options, see the
-// README at: https://github.com/devcontainers/templates/tree/main/src/typescript-node
+// README at: https://github.com/devcontainers/templates/tree/main/src/go .
 {
-	"name": "PNPM DevContainer",
-	"image": "mcr.microsoft.com/devcontainers/typescript-node:5-24-trixie",
+	"name": "Go DevContainer",
+	"image": "mcr.microsoft.com/devcontainers/go:2-1.27-trixie",
 	"features": {
-		"ghcr.io/devcontainers-extra/features/pnpm:2": {},
-		"ghcr.io/devcontainers/features/github-cli:1": {},
-		"ghcr.io/helpers4/devcontainer/pnpm-store:1": {}
+		"ghcr.io/devcontainers/features/github-cli:1": {}
 	},
 	"mounts": [
 		"source=dnd354ever-claude-config,target=/home/node/.claude,type=volume",
