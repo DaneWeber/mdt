@@ -17,8 +17,9 @@ import (
 )
 
 var (
-	pivotOutput      string
-	pivotByGroupFlag bool
+	pivotOutput  string
+	pivotLevelsN int
+	pivotSkip    int
 )
 
 // pivotCmd represents the pivot command
@@ -30,9 +31,14 @@ var pivotCmd = &cobra.Command{
 By default, H1 sections containing H2 subsections are swapped so that each
 H2 becomes a top-level section containing the matching content from every H1.
 
-With --by-group, top-level list items under a heading path (e.g.
-Year > Month > Day) become H2 group sections, and the heading path becomes a
-nested list inside each group.`,
+With --levels N, the first N levels of the lists become headings and the
+heading levels become nested list items. The top --skip heading levels (default
+1, e.g. the document title) are kept as they are. Running it again with
+--levels set to the number of former heading levels reverses it.
+
+Example: a file with "## Year / ### Month / #### Day" headings over lists of
+groups becomes one "## Group" section per group with -l 1, and turns back
+with -l 3.`,
 	Args: cobra.MinimumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		var inputs []io.Reader
@@ -47,11 +53,13 @@ nested list inside each group.`,
 		in := io.MultiReader(inputs...)
 
 		var out bytes.Buffer
-		transform := pivot
-		if pivotByGroupFlag {
-			transform = pivotByGroup
+		var err error
+		if cmd.Flags().Changed("levels") {
+			err = pivotLevels(in, &out, pivotLevelsN, pivotSkip, os.Stderr)
+		} else {
+			err = pivot(in, &out)
 		}
-		if err := transform(in, &out); err != nil {
+		if err != nil {
 			return err
 		}
 
@@ -66,7 +74,8 @@ nested list inside each group.`,
 func init() {
 	rootCmd.AddCommand(pivotCmd)
 	pivotCmd.Flags().StringVarP(&pivotOutput, "output", "o", "", "output file (default stdout)")
-	pivotCmd.Flags().BoolVarP(&pivotByGroupFlag, "by-group", "g", false, "turn top-level list items into H2 group sections")
+	pivotCmd.Flags().IntVarP(&pivotLevelsN, "levels", "l", 0, "number of list levels to turn into headings; headings become list items (omit for the plain H1/H2 swap)")
+	pivotCmd.Flags().IntVarP(&pivotSkip, "skip", "s", 1, "number of top heading levels to keep unchanged (used with --levels)")
 }
 
 // headingText extracts plain text from a heading's inline children.

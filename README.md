@@ -105,11 +105,75 @@ go test ./...
 ## Usage
 
 ```bash
-mdt pivot -o output.md input1.md input2.md
+mdt pivot [flags] input.md...
 ```
 
-To take all Markdown files in the current directory and generate a pivot file:
+| Flag              | Meaning                                                              |
+| ----------------- | -------------------------------------------------------------------- |
+| `-o, --output`    | Output file (default: stdout). Overwritten if it exists.             |
+| `-l, --levels N`  | Swap headings and lists: the first N list levels become headings,    |
+|                   | and the heading levels become nested list items.                     |
+| `-s, --skip N`    | With `--levels`: keep the top N heading levels as-is (default 1).    |
+
+Multiple input files are concatenated before pivoting.
+
+### Swapping headings and lists (`--levels`)
+
+Given a log organized by date, with groups as list items:
+
+```markdown
+# Log
+
+## Year 1
+
+### Day 1
+
+- Dwarves
+  - Mined for gold
+- Elves
+  - Danced
+```
+
+`mdt pivot -l 1 log.md` turns the groups (1 list level) into headings and the
+dates into a nested list:
+
+```markdown
+# Log
+
+## Dwarves
+
+- Year 1
+  - Day 1
+    - Mined for gold
+
+## Elves
+
+- Year 1
+  - Day 1
+    - Danced
+```
+
+Running `mdt pivot -l 2` on that output turns the two date levels back into
+headings, restoring the original. HTML comments such as `<!-- NOW -->` under
+a heading are carried along. Paragraphs under a pivoted heading can't be
+placed in a list and are dropped, with a warning on stderr.
+
+`--skip` controls how many top heading levels are left alone. The default of
+1 keeps the document title. With `--skip 2`, each `##` section is pivoted
+on its own.
+
+For the sample files:
 
 ```bash
-mdt pivot -o output.md *.md
+mdt pivot -l 1 -o sample-files/background-activity-by-group.dm.md sample-files/background-activity.dm.md
+mdt pivot -l 3 -o sample-files/background-activity.dm.md sample-files/background-activity-by-group.dm.md
+```
+
+### Plain pivot (no `--levels`)
+
+Without `--levels`, H1 sections containing H2 subsections are swapped, as in
+the example at the top. This can merge one-file-per-group notes by date:
+
+```bash
+mdt pivot -o by-day.md dwarves.md elves.md
 ```
