@@ -6,7 +6,10 @@ set -euo pipefail
 # 1. Docker seeds a named volume's ownership from the image path it covers, but
 #    neither of these paths exists in the image -- so both volumes are created
 #    root:root and the "node" user can't write to them. Breaks `claude login`.
-sudo chown -R node:node /home/node/.claude /commandhistory
+
+# Disabling for now because Docker claims there's no node user,
+# likely because this is a Go DevContainer.
+# sudo chown -R node:node /home/node/.claude /commandhistory
 
 # 2. Install Claude Code from Anthropic's own installer. It puts a launcher at
 #    ~/.local/bin/claude pointing into ~/.local/share/claude/versions -- both in
