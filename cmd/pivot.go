@@ -4,8 +4,10 @@ Copyright © 2026 Dane Weber
 package cmd
 
 import (
+	"bytes"
 	"fmt"
 	"io"
+	"os"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -14,23 +16,57 @@ import (
 	"github.com/yuin/goldmark/text"
 )
 
+var (
+	pivotOutput      string
+	pivotByGroupFlag bool
+)
+
 // pivotCmd represents the pivot command
 var pivotCmd = &cobra.Command{
-	Use:   "pivot",
-	Short: "A brief description of your command",
-	Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
+	Use:   "pivot [flags] input.md...",
+	Short: "Pivot the heading structure of Markdown files",
+	Long: `Pivot the structure of one or more Markdown files.
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("pivot called")
+By default, H1 sections containing H2 subsections are swapped so that each
+H2 becomes a top-level section containing the matching content from every H1.
+
+With --by-group, top-level list items under a heading path (e.g.
+Year > Month > Day) become H2 group sections, and the heading path becomes a
+nested list inside each group.`,
+	Args: cobra.MinimumNArgs(1),
+	RunE: func(cmd *cobra.Command, args []string) error {
+		var inputs []io.Reader
+		for _, name := range args {
+			f, err := os.Open(name)
+			if err != nil {
+				return err
+			}
+			defer f.Close()
+			inputs = append(inputs, f, strings.NewReader("\n"))
+		}
+		in := io.MultiReader(inputs...)
+
+		var out bytes.Buffer
+		transform := pivot
+		if pivotByGroupFlag {
+			transform = pivotByGroup
+		}
+		if err := transform(in, &out); err != nil {
+			return err
+		}
+
+		if pivotOutput == "" || pivotOutput == "-" {
+			_, err := os.Stdout.Write(out.Bytes())
+			return err
+		}
+		return os.WriteFile(pivotOutput, out.Bytes(), 0o644)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(pivotCmd)
+	pivotCmd.Flags().StringVarP(&pivotOutput, "output", "o", "", "output file (default stdout)")
+	pivotCmd.Flags().BoolVarP(&pivotByGroupFlag, "by-group", "g", false, "turn top-level list items into H2 group sections")
 }
 
 // headingText extracts plain text from a heading's inline children.

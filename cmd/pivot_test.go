@@ -66,3 +66,53 @@ func TestPivot(t *testing.T) {
 		t.Errorf("pivot output mismatch\ngot:\n%s\nwant:\n%s", got, pivotExpected)
 	}
 }
+
+const byGroupInput = `# Log
+
+## Year 1
+
+### Day 1
+
+- Dwarves
+  - Mined for gold
+    - Found a cave
+- Elves
+
+### Day 2
+
+<!-- NOW -->
+
+- Dwarves
+- Elves
+  - Danced
+`
+
+const byGroupExpected = `# Log
+
+## Dwarves
+
+- Year 1
+  - Day 1
+    - Mined for gold
+      - Found a cave
+  - Day 2
+    <!-- NOW -->
+
+## Elves
+
+- Year 1
+  - Day 1
+  - Day 2
+    <!-- NOW -->
+    - Danced
+`
+
+func TestPivotByGroup(t *testing.T) {
+	var output bytes.Buffer
+	if err := pivotByGroup(strings.NewReader(byGroupInput), &output); err != nil {
+		t.Fatalf("pivotByGroup returned error: %v", err)
+	}
+	if got := output.String(); got != byGroupExpected {
+		t.Errorf("pivotByGroup output mismatch\ngot:\n%s\nwant:\n%s", got, byGroupExpected)
+	}
+}
